@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 import asyncio
 import googletrans
 import enchant
-
+from music_bot import MusicBot
 
 '''
 PREREQUISITES:
@@ -22,17 +22,27 @@ settings_file = "data/settings.json"
 urls_file = "data/urls.json"
 xd_variations_file = "data/xd_variations.txt"
 role_emoji_file = "data/role-emoji.json"
+magic_muschel_file = "data/magic_muschel_answers.json"
 
 johncena1 = "audio/johncena.mp3"
 johncena2 = "audio/johncena2.mp3"
 
 #INITIALIZE BOT
 load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN_DEV")
 FFMPEG_PATH = os.getenv("FFMPEG_PATH")
 
 intents = discord.Intents.all()
 bot = discord.Client(intents=intents)
+
+
+class Command:
+    def __init__(self, function, name: str, description: str, isEnabled: bool = True, isDeamon: bool = False, needPermission: bool = False):
+        self.fun = function
+        self.isEnabled = isEnabled
+        self.isDeamon = isDeamon
+        self.needPermission = needPermission
+        self.description = description
 
 #SETTINGS FUNCTIONS
 def dump_settings():
@@ -127,7 +137,7 @@ async def check_xd(message): #checks for "xd", including all formats in the xd_v
             return
 
 async def stupidedia_random(message): #TODO fix, some api changed, should get a random page from stupidedia and display its content
-    url = urls["stupidedia_random"]
+    """url = urls["stupidedia_random"]
     scraper = cloudscraper.create_scraper()
     
     html_unparsed = scraper.get(url).text
@@ -139,13 +149,11 @@ async def stupidedia_random(message): #TODO fix, some api changed, should get a 
     out = html.find(id="firstHeading").get_text() + " \n "
     print(out)
     out += div.find("p").get_text()
-    out = html
+    out = html"""
 
-    #await message.channel.send(out)
+    await message.channel.send("lul")
 
 async def help_message(message): #prints a help message including all commands
-    out = "-----------\nAll commmands start with: **-mr \{command\}**\nAvailable commands are:\n"
-
     embed = discord.Embed(title="Commands", description="Usage: -mr \{command\}", color=0x34aae5)
 
     for key in commands.keys():
@@ -187,6 +195,10 @@ async def john_cena(channel): #joins channel (0.5% chance), and plays john cena
             await asyncio.sleep(1)
 
         await client.disconnect()
+
+async def magic_muschel(message):
+    rnd = random.randint(0, len(muschel_answers))
+    await message.channel.send(list(muschel_answers.values()[rnd]))
 
 async def random_list(message):
     message_text = message.content[16:]
@@ -299,6 +311,10 @@ async def check_german(message): #checks whether german is in the message and re
 
     if len(out) != 0: await message.channel.send(out)
 
+#music bot stuff
+
+
+
 #EVENT HANDLER
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -357,11 +373,18 @@ with open(xd_variations_file, "r") as fp:
 with open(urls_file, "r") as fp:
     urls = json.load(fp)
 
+with open(magic_muschel_file, "r") as fp:
+    muschel_answers = json.load()
+
 #german checker stuff
 
 translator = googletrans.Translator()
 dict_en = enchant.Dict("en_US")
 dict_de = enchant.Dict("de_DE")
+
+#music bot stuff
+
+music_bot = MusicBot()
 
 #ALL COMMANDS
 commands = {
@@ -376,7 +399,12 @@ commands = {
     "send-reaction-message": {"fun": role_channel_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role add message to the specified role channel"},
     "send-reaction-rem-message": {"fun": role_channel_rem_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role remove message to the specified role channel"},
     "send-reaction-rem-add-message": {"fun": role_channel_rem_add_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role add and remove message to the specified role channel"},
-    "random-list": {"fun": random_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "randomize a set of elements, seperated by \",\""}
+    "random-list": {"fun": random_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "randomize a set of elements, seperated by \",\""},
+    "p": {"fun": music_bot.play, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song to the queue, also lets the bot join the channel if it hasn't already"},
+    "pause": {"fun": music_bot.pause, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "pauses the music"},
+    "resume": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "resumes the music"},
+    "bye": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
+    "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 
 #with open("commands.json", "w") as fp:
