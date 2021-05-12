@@ -146,7 +146,7 @@ async def stupidedia_random(message): #TODO fix, some api changed, should get a 
     print(html)
     div = html.find(id="mw-content-text")
     print(div)
-    out = html.find(id="firstHeading").get_text() + " \n "
+    out = html.find(id="firstHeading").get_text() +
     print(out)
     out += div.find("p").get_text()
     out = html"""
@@ -154,10 +154,9 @@ async def stupidedia_random(message): #TODO fix, some api changed, should get a 
     await message.channel.send("lul")
 
 async def help_message(message): #prints a help message including all commands
-    embed = discord.Embed(title="Commands", description="Usage: -mr \{command\}", color=0x34aae5)
+    embed = discord.Embed(title="Commands", description="Usage: -mr command", color=0x34aae5)
 
     for key in commands.keys():
-
         if not commands[key]["needPermission"] and not commands[key]["isDeamon"] and commands[key]["enabled"]: #only print commands for which no permissions are needed and aren't deamons
             embed.add_field(name=f"\t**{key}**", value=commands[key]["desc"])
 
@@ -311,10 +310,6 @@ async def check_german(message): #checks whether german is in the message and re
 
     if len(out) != 0: await message.channel.send(out)
 
-#music bot stuff
-
-
-
 #EVENT HANDLER
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -374,16 +369,14 @@ with open(urls_file, "r") as fp:
     urls = json.load(fp)
 
 with open(magic_muschel_file, "r") as fp:
-    muschel_answers = json.load()
+    muschel_answers = json.load(fp)
 
 #german checker stuff
-
 translator = googletrans.Translator()
 dict_en = enchant.Dict("en_US")
 dict_de = enchant.Dict("de_DE")
 
 #music bot stuff
-
 music_bot = MusicBot()
 
 #ALL COMMANDS
@@ -401,9 +394,12 @@ commands = {
     "send-reaction-rem-add-message": {"fun": role_channel_rem_add_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role add and remove message to the specified role channel"},
     "random-list": {"fun": random_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "randomize a set of elements, seperated by \",\""},
     "p": {"fun": music_bot.play, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song to the queue, also lets the bot join the channel if it hasn't already"},
+    "join": {"fun": music_bot.connect, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "connects the bot to the channel you're currently in"},
     "pause": {"fun": music_bot.pause, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "pauses the music"},
     "resume": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "resumes the music"},
-    "bye": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
+    "q": {"fun": music_bot.print_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the queue"},
+    "bye": {"fun": music_bot.disconnect, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
+    "s": {"fun": music_bot.skip_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the current song"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 
@@ -414,6 +410,8 @@ restricted_channel = None
 role_channel = None
 role_message = None
 role_remove_message = None
+
+
 
 load_settings()
 
