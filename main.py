@@ -400,6 +400,8 @@ commands = {
     "q": {"fun": music_bot.print_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the queue"},
     "bye": {"fun": music_bot.disconnect, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
     "s": {"fun": music_bot.skip_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the current song"},
+    "np": {"fun": music_bot.print_now_playing, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
+    "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 

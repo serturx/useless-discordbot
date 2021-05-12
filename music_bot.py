@@ -2,12 +2,13 @@ import discord
 import youtube_dl
 from threading import Thread
 import asyncio
+from requests.models import PreparedRequest
+import requests.exceptions
 
 class Song:
     def __init__(self, title, url):
         self.title = title
-        self.url = url
-        
+        self.url = url         
 
 class MusicBot:
 
@@ -22,7 +23,7 @@ class MusicBot:
         self.skip = False
         self.is_playing = False
 
-    async def play(self, message):
+    async def play(self, message, playtop=False):
         if self.voice_client is None:
             try:
                 await self.connect(message)
@@ -30,10 +31,21 @@ class MusicBot:
                 await message.channel.send("Couldn't connect: " + str(err))
 
         if self.voice_client is not None:
-            await self.add_to_queue(message.content[6:])
+            await self.add_to_queue(message.content[6:], playtop=playtop)
         
         if not self.voice_client.is_playing():
             await self.play_queue()
+
+    async def playtop(self, message):
+        self.play(message, playtop=True)
+
+    async def is_url(self, url):
+        prepared_request = PreparedRequest()
+        try:
+            prepared_request.prepare_url(url, None)
+            return True
+        except Exception:
+            return False
 
     def pause(self, message):
         self.voice_client.pause()
@@ -72,11 +84,20 @@ class MusicBot:
         except Exception as err:
             print(err)
 
-    async def add_to_queue(self, url):
+    async def add_to_queue(self, url, playtop=False):
         try:
             with youtube_dl.YoutubeDL({}) as ydl:
-                info = ydl.extract_info(url, download=False)
-                self.queue.append(Song(info["title"], url))
+                if(await self.is_url(url)):
+                    info = ydl.extract_info(url, download=False)
+                else:
+                    await self.text_channel.send("**Searching** for: " + url)
+                    info = ydl.extract_info(f"ytsearch:{url}", download=False)['entries'][0]
+
+                if(playtop):
+                    self.queue.insert(0, Song(info["title"], info["webpage_url"]))
+                else:
+                    self.queue.append(Song(info["title"], info["webpage_url"]))
+
                 await self.text_channel.send("**Added:** " + self.queue[-1].title)
         except Exception as err:
             await self.text_channel.send("Error while retrieving song info (2): " + str(err))
@@ -85,14 +106,17 @@ class MusicBot:
         if self.channel is None:
             return
 
-        queue_str = f"**Now Playing:** {self.playing.title}\n**Queue: \n **"
-        for s in self.queue:
-            queue_str += s.title + "\n"
+        queue_str = f"**Now Playing: ** {self.playing.title} \n**Queue: \n **"
+        for i in range(0, len(self.queue)):
+            queue_str += f"{i}. ```{self.queue[i].title}``` \n"
 
         await self.text_channel.send(queue_str)
+
+    async def print_now_playing(self, message):
+        await self.text_channel.send("**Now Playing: **" + self.playing.title)
     
     async def skip_song(self, message):
-        await self.text_channel.send("Skipped :D")
+        await self.text_channel.send("**Skipped** :D")
         self.skip = True
     
     async def play_queue(self):
@@ -101,7 +125,7 @@ class MusicBot:
         while(len(self.queue) != 0):
             self.playing = self.queue.pop()
             session = self.get_session_from_url(self.playing)
-            source = discord.FFmpegPCMAudio(source=session)
+            source = discord.FFmpegPCMAudio(source=session, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
             self.voice_client.play(source)
 
             try:
