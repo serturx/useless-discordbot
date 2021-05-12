@@ -115,6 +115,9 @@ class MusicBot:
     async def print_now_playing(self, message):
         await self.text_channel.send("**Now Playing: **" + self.playing.title)
     
+    async def clear_queue(self, message):
+        self.queue = []
+
     async def skip_song(self, message):
         await self.text_channel.send("**Skipped** :D")
         self.skip = True
@@ -138,5 +141,4 @@ class MusicBot:
             self.voice_client.stop()
             self.skip = False
         
-        await self.voice_client.disconnect()
-
+        #await self.voice_client.disconnect()
