@@ -408,6 +408,7 @@ commands = {
     "np": {"fun": music_bot.print_now_playing, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
     "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
     "clear": {"fun": music_bot.clear_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "clears the queue"},
+    "rm": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 
