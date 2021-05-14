@@ -3,7 +3,6 @@ import os
 import json
 import random
 from dotenv import load_dotenv
-from bs4 import BeautifulSoup
 import asyncio
 import googletrans
 import enchant
@@ -16,7 +15,7 @@ googletrans version 4.0.0
 FFMPEG binary
 '''
 
-#DATA PATHS
+# DATA PATHS
 copypastas_file = "data/copypastas.json"
 settings_file = "data/settings.json"
 urls_file = "data/urls.json"
@@ -27,7 +26,7 @@ magic_muschel_file = "data/magic_muschel_answers.json"
 johncena1 = "audio/johncena.mp3"
 johncena2 = "audio/johncena2.mp3"
 
-#INITIALIZE BOT
+# INITIALIZE BOT
 load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN_DEV")
 FFMPEG_PATH = os.getenv("FFMPEG_PATH")
@@ -44,7 +43,8 @@ class Command:
         self.needPermission = needPermission
         self.description = description
 
-#SETTINGS FUNCTIONS
+
+# SETTINGS FUNCTIONS
 def dump_settings():
     settings = {}
     settings["commands"] = {}
@@ -59,6 +59,7 @@ def dump_settings():
 
     with open(settings_file, "w") as fp:
         json.dump(settings, fp)
+
 
 def load_settings():
     global restricted_channel
@@ -76,13 +77,13 @@ def load_settings():
     for keyD, valD in settings["commands"].items():
         commands[keyD]["enabled"] = valD
 
-
     restricted_channel = settings["restricted-channel"]
     role_channel = settings["role-channel"]
     role_message = settings["role-message"]
     role_remove_message = settings["role-remove-message"]
 
-#COMMAND FUNCTIONS
+
+# COMMAND FUNCTIONS
 async def command_selector(message):
     command = message.content.split(" ")
     if command[1] == "enable" or command[1] == "disable":
@@ -98,10 +99,11 @@ async def command_selector(message):
             else:
                 commands[command[2]]["enabled"] = False
 
-            await message.channel.send(f"{command[1]}d feature: **{command[2]}**")
-            
+            await message.channel.send(f"{command[1]}d feature:" +
+                                       " **{command[2]}**")
+
             dump_settings()
-    
+
     elif command[1] in commands:
         if commands[command[1]]["fun"] is None:
             await message.channel.send("Can't execute this command directly")
@@ -109,7 +111,7 @@ async def command_selector(message):
 
         if commands[command[1]]["needPermission"] and message.author.guild_permissions.administrator:
             await commands[command[1]]["fun"](message)
-            
+
         elif not commands[command[1]]["needPermission"]:
             await commands[command[1]]["fun"](message)
 
@@ -119,22 +121,25 @@ async def command_selector(message):
         await message.channel.send(f"unknown command or feature **{command[1]}**")
 
 
-
-async def post_copypasta(message): #gets a random entry from the copypasta file
+async def post_copypasta(message): # gets a random entry from the copypasta file
     if not commands["kopiernudel"]["enabled"]: return 
     randIndex = random.randint(0, len(copypastas) - 1)
     await message.channel.send(copypastas[str(randIndex)])
 
-async def check_xd(message): #checks for "xd", including all formats in the xd_variations file and replies with random xd string (5% chance)
-    if not commands["xd"]["enabled"]: return
 
-    if random.randint(0, 100) < 95: return
+async def check_xd(message):  # checks for "xd", including all formats in the xd_variations file and replies with random xd string (5% chance)
+    if not commands["xd"]["enabled"]:
+        return
+
+    if random.randint(0, 100) < 95:
+        return
 
     for v in xd_variations:
         if v in message.content:
             await message.channel.send("".join([c.upper() if random.randint(0, 1) == 0 else c.lower()
-                for c in "x" + random.randint(1, 10) * "d"]))
+                                       for c in "x" + random.randint(1, 10) * "d"]))
             return
+
 
 async def stupidedia_random(message): #TODO fix, some api changed, should get a random page from stupidedia and display its content
     """url = urls["stupidedia_random"]
@@ -388,7 +393,7 @@ commands = {
     "deutschdurchsetzer": {"fun": check_german, "enabled": True, "isDeamon": True, "needPermission": False, "desc": "When an english message appears, the bot will sometimes reply"},
     "accidental-cena": {"fun": None, "enabled": True, "isDeamon": True, "needPermission": False, "desc": "John Cena randomly joins a channel (only enable/disable)"},
     "change-restricted-channel": {"fun": restricted_channel_update, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "specifies the channel from which to accept commands, **None** to accept from all channels"},
-    "change-role-channel": {"fun": role_channel_update,"enabled": True, "isDeamon": False, "needPermission": True, "desc": "specifies the role channel (link with '#')"},
+    "change-role-channel": {"fun": role_channel_update, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "specifies the role channel (link with '#')"},
     "send-reaction-message": {"fun": role_channel_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role add message to the specified role channel"},
     "send-reaction-rem-message": {"fun": role_channel_rem_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role remove message to the specified role channel"},
     "send-reaction-rem-add-message": {"fun": role_channel_rem_add_send_message, "enabled": True, "isDeamon": False, "needPermission": True, "desc": "sends the role add and remove message to the specified role channel"},
