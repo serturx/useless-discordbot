@@ -18,6 +18,9 @@ class Song:
             info = ydl.extract_info(self.url, download=False)
             return info["formats"][0]["url"]
 
+    def __str__(self):
+        return f"{self.title}, {self.url}"
+
 
 class URL:
     def __init__(self, url):
@@ -36,6 +39,9 @@ class URL:
 
     def is_yt(self):
         return "youtube.com" in self.url
+
+    def is_playlist(self):
+        return "playlist" in self.url or "album" in self.url
 
     def get_spotify_id(self):
         return self.url.split("/")[-1]
@@ -85,7 +91,7 @@ class MusicBot:
                 return Song(info["title"], info["webpage_url"])
 
         except Exception as err:
-            self.text_channel.send("Error while searching YouTube: " + str(err))
+            await self.text_channel.send("Error while searching YouTube: " + str(err))
 
     async def convert_to_yt_song(self, url: URL):
                 #if "playlist" in url:
@@ -145,12 +151,53 @@ class MusicBot:
             info = ydl.extract_info(url, download=False)
             return Song(info["title"], info["webpage_url"])
 
+    async def add_playlist_to_queue(self, url: URL, playtop=False):
+        playlist = []
+
+        if url.is_spotify():
+            if "playlist" in url.url:
+                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=5)
+
+                tracks = playlist_items["tracks"]["items"][:5]
+
+                for entry in tracks:
+                    song = await self.search_yt(entry["track"]["name"] + " " + entry["track"]["album"]["artists"][0]["name"])
+                    playlist.append(song)
+
+            elif "album" in url.url:
+                return
+
+            else:
+                raise ValueError("invalid spotify link")
+
+        elif url.is_yt():
+
+            with youtube_dl.YoutubeDL({}) as ydl:
+                info = ydl.extract_info(url.url, download=False)
+
+                for entry in info["entries"]:
+                    playlist.append(Song(entry["title"], entry["webpage_url"]))
+
+        if len(playlist) > 0:
+            if playtop:
+                self.queue = playlist + self.queue
+
+            else:
+                print("adding...")
+                self.queue += playlist
+
+            await self.text_channel.send("Added Playlist: " + info["title"])
+
     async def add_to_queue(self, link: str, playtop=False, verbose=True):
         try:
             url = URL(link)
             song = None
 
-            if(url.is_valid_url()):
+            if url.is_playlist():
+                await self.add_playlist_to_queue(url)
+                return
+
+            elif url.is_valid_url():
                 if url.is_yt():
                     song = self.get_song_from_yt(url)
                 elif url.is_spotify():
@@ -158,14 +205,17 @@ class MusicBot:
                 else:
                     await self.text_channel.send("Unsupported Platform :(")
 
-                if song is not None:
-                    if playtop:
-                        self.queue.append(song)
-                    else:
-                        self.queue.insert(0, song)
+            else:
+                song = await self.search_yt(link)
 
-                    if verbose:
-                        await self.text_channel.send("Added: " + song.title)
+            if song is not None:
+                if playtop:
+                    self.queue.insert(0, song)
+                else:
+                    self.queue.append(song)
+
+                if verbose:
+                    await self.text_channel.send("Added: " + song.title)
 
         except Exception as err:
             await self.text_channel.send(
