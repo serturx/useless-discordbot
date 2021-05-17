@@ -61,11 +61,11 @@ class MusicBot:
 
         load_dotenv()
 
-        credentials = SpotifyClientCredentials(
+        auth = SpotifyClientCredentials(
                                                 os.getenv("SPOTIFY_CLIENT_ID"),
                                                 os.getenv("SPOTIFY_CLIENT_SECRET"))
 
-        self.spotify = spotipy.Spotify(auth=credentials.get_access_token())
+        self.spotify = spotipy.Spotify(auth_manager=auth)
 
     async def play(self, message, playtop=False):
         if self.voice_client is None:
