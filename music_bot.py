@@ -169,11 +169,17 @@ class MusicBot:
                 tracks = playlist_items["tracks"]["items"][:20]
 
                 for entry in tracks:
-                    song = await self.search_yt(entry["track"]["name"] + " " + entry["track"]["album"]["artists"][0]["name"])
-                    if song is not None:
-                        playlist.append(song)
-                    else:
-                        await self.text_channel.send("Couldn't add " + entry["track"]["name"])
+
+                    try:
+                        artist = entry["track"]["album"]["artists"][0]["name"]
+
+                        song = await self.search_yt(entry["track"]["name"] + " " + artist)
+                        if song is not None:
+                            playlist.append(song)
+                        else:
+                            await self.text_channel.send("Couldn't add " + entry["track"]["name"])
+                    except IndexError:
+                        pass
 
                 playlist_title = playlist_items["name"]
 
@@ -183,8 +189,12 @@ class MusicBot:
                 tracks = album_items["tracks"]["items"][:20]
 
                 for entry in tracks:
-                    song = await self.search_yt(entry["name"] + " " + entry["artists"][0]["name"])
-                    playlist.append(song)
+                    try:
+                        artist = entry["artists"][0]["name"]
+                        song = await self.search_yt(entry["name"] + " " + artist)
+                        playlist.append(song)
+                    except IndexError:
+                        pass
 
                 playlist_title = album_items["name"]
 
