@@ -409,6 +409,7 @@ commands = {
     "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
     "clear": {"fun": music_bot.clear_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "clears the queue"},
     "rm": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
+    "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song at the first given position the the second given position"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 
