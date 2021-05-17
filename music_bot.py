@@ -153,19 +153,32 @@ class MusicBot:
 
     async def add_playlist_to_queue(self, url: URL, playtop=False):
         playlist = []
+        playlist_title = ""
+
+        await self.text_channel.send("Gathering Playlist information...")
 
         if url.is_spotify():
             if "playlist" in url.url:
-                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=5)
+                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=20)
 
-                tracks = playlist_items["tracks"]["items"][:5]
+                tracks = playlist_items["tracks"]["items"][:20]
 
                 for entry in tracks:
                     song = await self.search_yt(entry["track"]["name"] + " " + entry["track"]["album"]["artists"][0]["name"])
                     playlist.append(song)
 
+                playlist_title = playlist_items["name"]
+
             elif "album" in url.url:
-                return
+                album_items = self.spotify.album_tracks(url.get_spotify_id(), limit=20)
+
+                tracks = album_items["tracks"]["items"][:20]
+
+                for entry in tracks:
+                    song = await self.search_yt(entry["name"] + " " + entry["artists"][0]["name"])
+                    playlist.append(song)
+
+                playlist_title = album_items["name"]
 
             else:
                 raise ValueError("invalid spotify link")
@@ -178,15 +191,17 @@ class MusicBot:
                 for entry in info["entries"]:
                     playlist.append(Song(entry["title"], entry["webpage_url"]))
 
+                playlist_title = info["title"]
+
         if len(playlist) > 0:
             if playtop:
                 self.queue = playlist + self.queue
 
             else:
-                print("adding...")
                 self.queue += playlist
 
-            await self.text_channel.send("Added Playlist: " + info["title"])
+            await self.text_channel.send("Added Playlist: " + playlist_title)
+            
 
     async def add_to_queue(self, link: str, playtop=False, verbose=True):
         try:
@@ -226,11 +241,13 @@ class MusicBot:
         if self.channel is None:
             return
 
-        queue_str = f"**Now Playing: ** {self.playing.title} \n**Queue: \n **"
-        for i in range(0, len(self.queue)):
-            queue_str += f"{i + 1}. ```{self.queue[i].title}``` \n"
+        embed = discord.Embed(title=f"Now Playing:\n `{self.playing.title}`", url=self.playing.url, colour=discord.Color.purple())
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value="**Queue:**")
 
-        await self.text_channel.send(queue_str)
+        for i in range(0, len(self.queue)):
+            embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"{i + 1}. [`{self.queue[i].title}`]({self.queue[i].url})",  inline=False)
+
+        await self.text_channel.send(embed=embed)
 
     async def print_now_playing(self, message): # TODO add current song length/position
         await self.text_channel.send("**Now Playing: **" + self.playing.title)
@@ -242,6 +259,16 @@ class MusicBot:
     async def skip_song(self, message):
         await self.text_channel.send("**Skipped** :D")
         self.skip = True
+
+    async def move_song(self, message):
+        split = message.content.split(" ")
+
+        try:
+            song = self.queue.pop(int(split[2]) - 1)
+            self.queue.insert(int(split[3]) - 1, song)
+            await self.text_channel.send(f"**Moved** `{song.title}` **from** Pos. `{split[2]}` **to** Pos. `{split[3]}`")
+        except Exception as err:
+            await self.text_channel.send("Error while moving song: " + str(err))
 
     async def play_queue(self):
 
