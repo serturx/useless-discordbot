@@ -91,8 +91,8 @@ class MusicBot:
                                         download=False)["entries"][0]
                 return Song(info["title"], info["webpage_url"])
 
-        except Exception as err:
-            await self.text_channel.send("Error while searching YouTube: " + str(err))
+        except Exception:
+            return None
 
     async def convert_to_yt_song(self, url: URL):
                 #if "playlist" in url:
@@ -164,18 +164,21 @@ class MusicBot:
 
         if url.is_spotify():
             if "playlist" in url.url:
-                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=20)
+                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=21)
 
                 tracks = playlist_items["tracks"]["items"][:20]
 
                 for entry in tracks:
                     song = await self.search_yt(entry["track"]["name"] + " " + entry["track"]["album"]["artists"][0]["name"])
-                    playlist.append(song)
+                    if song is not None:
+                        playlist.append(song)
+                    else:
+                        await self.text_channel.send("Couldn't add " + entry["track"]["name"])
 
                 playlist_title = playlist_items["name"]
 
             elif "album" in url.url:
-                album_items = self.spotify.album_tracks(url.get_spotify_id(), limit=20)
+                album_items = self.spotify.album_tracks(url.get_spotify_id(), limit=21)
 
                 tracks = album_items["tracks"]["items"][:20]
 
@@ -206,7 +209,6 @@ class MusicBot:
                 self.queue += playlist
 
             await self.text_channel.send("Added Playlist: " + playlist_title)
-            
 
     async def add_to_queue(self, link: str, playtop=False, verbose=True):
         try:
@@ -295,7 +297,7 @@ class MusicBot:
             except Exception as err:
                 await self.text_channel.send("Error while playing: "
                                              + str(err))
-                self.disconnect(None)
+                await self.disconnect(None)
 
             self.voice_client.stop()
             self.skip = False
