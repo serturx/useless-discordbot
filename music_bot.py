@@ -6,6 +6,7 @@ import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
 import os
+import random
 
 
 class Song:
@@ -113,6 +114,10 @@ class MusicBot:
     def resume(self, message):
         self.voice_client.resume()
         self.music_paused = False
+
+    async def shuffle_list(self, message):
+        random.shuffle(self.queue)
+        await self.text_channel.send("Shuffled the queue")
 
     async def remove_index(self, message):
 
