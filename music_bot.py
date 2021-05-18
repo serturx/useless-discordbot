@@ -161,13 +161,13 @@ class MusicBot:
         else:
             self.voice_channel = message.author.voice.channel
             self.voice_client = await self.voice_channel.connect()
-            await self.text_channel.send(f"{Emojis.OKAYCHAMP} **Connected** :)")
+            await self.text_channel.send(f"{Emojis.OKAYCHAMP.value} **Connected** :)")
 
     async def set_disconnect_flag(self, message):
         self.disconnecting = True
 
     async def disconnect(self, message):
-        await self.text_channel.send(Emojis.PAINCHAMP)
+        await self.text_channel.send(Emojis.PAINCHAMP.value)
         await self.voice_client.disconnect()
         self.voice_client = None
         self.queue = []
@@ -304,7 +304,7 @@ class MusicBot:
             total_length += self.queue[i].length
 
         if len(self.queue) == 0:
-            embed.add_field(name=f"**Wow {Emojis.LEOSKATZE}**", value=f"it's _empty_ {Emojis.WEIRDCHAMP}")
+            embed.add_field(name=f"**Wow {Emojis.LEOSKATZE.value}**", value=f"it's _empty_ {Emojis.WEIRDCHAMP.value}")
 
         loop_emoji = ":white_check_mark:" if self.song_looping else ":x:"
         qloop_emoji = ":white_check_mark:" if self.queue_looping else ":x:"
@@ -322,7 +322,7 @@ class MusicBot:
 
     async def clear_queue(self, message):
         self.queue = []
-        await self.text_channel.send(f"{Emojis.MONKAHMM} **Queue cleared**")
+        await self.text_channel.send(f"{Emojis.MONKAHMM.value} **Queue cleared**")
 
     async def skip_song(self, message):
         await self.text_channel.send(":white_check_mark: **Skipped** :D")
