@@ -72,7 +72,7 @@ def load_settings():
     with open(settings_file, "r") as fp:
         settings = json.load(fp)
 
-    print(str(settings.items()))
+    # print(str(settings.items()))
 
     for keyD, valD in settings["commands"].items():
         commands[keyD]["enabled"] = valD
@@ -187,7 +187,7 @@ async def help_message(message):  # prints a help message including all commands
 
 async def john_cena(channel):  # joins channel (0.5% chance), and plays john cena
     rnd = random.randint(1, 200)
-    print(rnd)
+    # print(rnd)
 
     if rnd == 1:
         client = await channel.connect()
@@ -308,7 +308,7 @@ async def check_german(message):
     out = ""
     words = message_text.split(" ")
 
-    if translator.detect(message_text).lang == "en" and random.randint(1, 100) == 1:
+    if random.randint(1, 100) == 1 and translator.detect(message_text).lang == "en":
         if random.randint(1, 100) <= 50:
             out = "Sprich Deutsch du Hurensohn"
 
@@ -428,9 +428,12 @@ commands = {
     "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song the top of the queue"},
     "clear": {"fun": music_bot.clear_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "clears the queue"},
     "rm": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
-    "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song at the first given position the second given position"},
+    "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song from the first given position the second given position"},
     "shuffle": {"fun": music_bot.shuffle_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "shuffles the queue"},
     ">>": {"fun": music_bot.fast_forward, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the given amount of seconds"},
+    "skipto": {"fun": music_bot.skipto, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips to a given position in the queue"},
+    "qloop": {"fun": music_bot.queue_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles queue looping"},
+    "loop": {"fun": music_bot.song_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles song looping"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 

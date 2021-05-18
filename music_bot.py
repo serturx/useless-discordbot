@@ -73,6 +73,8 @@ class MusicBot:
         self.skip = False
         self.is_playing = False
         self.disconnecting = False
+        self.queue_looping = False
+        self.song_looping = False
 
         load_dotenv()
 
@@ -86,16 +88,20 @@ class MusicBot:
             try:
                 await self.connect(message)
             except Exception as err:
-                await message.channel.send("Couldn't connect: " + str(err))
+                await message.channel.send(":x: Couldn't connect: " + str(err))
 
         if self.voice_client is not None:
+            if message.author.voice.channel.id != self.voice_channel.id:
+                await self.text_channel.send(":LULW: You must be in the same channelto send commands")
+                return
+
             await self.add_to_queue(message.content[6:], playtop=playtop)
 
-        if not self.voice_client.is_playing():
-            await self.play_queue()
+            if not self.voice_client.is_playing():
+                await self.play_queue()
 
     async def playtop(self, message):
-        self.play(message, playtop=True)
+        await self.play(message, playtop=True)
 
     async def search_yt(self, query):
         try:
@@ -112,7 +118,7 @@ class MusicBot:
             track = self.spotify.track(url.get_spotify_id())
             return await self.search_yt(track["name"] + " " + track["album"]["artists"][0]["name"])
         else:
-            raise ValueError("Spotify Link is not a track")
+            raise ValueError(":x: Spotify Link is not a track")
 
     async def pause(self, message):
         self.voice_client.pause()
@@ -124,17 +130,16 @@ class MusicBot:
 
     async def shuffle_list(self, message):
         random.shuffle(self.queue)
-        await self.text_channel.send("Shuffled the queue")
+        await self.text_channel.send(":twisted_rightwards_arrows: **Shuffled** the queue")
 
     async def remove_index(self, message):
 
         try:
-            index = int(message.content[7:])
-            song = self.queue.pop(index + 1)
-            await self.text_channel.send("Removed " + song.title)
+            index = int(message.content.split(" ")[-1])
+            song = self.queue.pop(index - 1)
+            await self.text_channel.send(":white_check_mark: **Removed** " + song.title)
         except Exception as err:
-            await self.text_channel.send("Error while removing song: " +
-                                         str(err))
+            await self.text_channel.send(":x: Error while removing song: " + str(err))
 
         return
 
@@ -142,24 +147,29 @@ class MusicBot:
         self.text_channel = message.channel
 
         if message.author.voice is None:
-            raise(ConnectionError("You're not currently in a voice channel"))
+            raise(ConnectionError(":x: You're not currently in a voice channel"))
         else:
             self.channel = message.author.voice.channel
             self.voice_client = await self.channel.connect()
-            await self.text_channel.send("Connected :)")
+            await self.text_channel.send(":okayChamp: **Connected** :)")
 
     async def set_disconnect_flag(self, message):
         self.disconnecting = True
 
     async def disconnect(self, message):
-        await self.text_channel.send("Bye :(")
+        await self.text_channel.send(":painChamp:")
         await self.voice_client.disconnect()
-        self.voice_channel = None
         self.voice_client = None
-        self.music_paused = False
         self.queue = []
         self.playing = None
+        self.voice_channel = None
+        self.text_channel = None
+        self.music_paused = False
+        self.skip = False
         self.is_playing = False
+        self.disconnecting = False
+        self.spotify = None
+        self.queue_looping = False
 
     def get_song_from_yt(self, url: URL):
         with youtube_dl.YoutubeDL({}) as ydl:
@@ -170,7 +180,7 @@ class MusicBot:
         playlist = []
         playlist_title = ""
 
-        await self.text_channel.send("Gathering Playlist information...")
+        await self.text_channel.send(":hourglass_flowing_sand: Gathering Playlist information...")
 
         if url.is_spotify():
             if "playlist" in url.url:
@@ -187,9 +197,9 @@ class MusicBot:
                         if song is not None:
                             playlist.append(song)
                         else:
-                            await self.text_channel.send("Couldn't add " + entry["track"]["name"])
+                            await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
                     except IndexError:
-                        await self.text_channel.send("Couldn't add " + entry["track"]["name"])
+                        await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
 
                 playlist_title = playlist_items["name"]
 
@@ -209,7 +219,7 @@ class MusicBot:
                 playlist_title = album_items["name"]
 
             else:
-                raise ValueError("invalid spotify link")
+                raise ValueError(":x: invalid spotify link")
 
         elif url.is_yt():
 
@@ -228,7 +238,7 @@ class MusicBot:
             else:
                 self.queue += playlist
 
-            await self.text_channel.send("Added Playlist: " + playlist_title)
+            await self.text_channel.send(":white_check_mark: Added Playlist: " + playlist_title)
 
     async def add_to_queue(self, link: str, playtop=False, verbose=True):
         try:
@@ -246,7 +256,7 @@ class MusicBot:
                 elif url.is_spotify():
                     song = await self.convert_to_yt_song(url)
                 else:
-                    await self.text_channel.send("Unsupported Platform :(")
+                    await self.text_channel.send(":x: Unsupported Platform :(")
 
             else:
                 song = await self.search_yt(link)
@@ -258,10 +268,12 @@ class MusicBot:
                     self.queue.append(song)
 
                 if verbose:
-                    await self.text_channel.send("Added: " + song.title)
+                    embed = discord.Embed(title=f"Added:\n {song.title}", url=song.url, colour=discord.Color.purple())
+                    embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"Position in Queue:{0 if playtop else len(self.queue)}\nLength: {song.get_length()}")
+                    await self.text_channel.send(embed=embed)
 
         except Exception as err:
-            await self.text_channel.send("Error while retrieving" +
+            await self.text_channel.send(":x: Error while retrieving" +
                                          " song info : " + str(err))
 
     async def print_queue(self, message):
@@ -281,6 +293,10 @@ class MusicBot:
                             value=f"{i + 1}. {str(self.queue[i])}\n`{self.queue[i].get_length()}`", inline=False)
             total_length += self.queue[i].length
 
+        loop_emoji = ":white_check_mark:" if self.song_looping else ":x:"
+        qloop_emoji = ":white_check_mark:" if self.queue_looping else ":x:"
+
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"Loop: {loop_emoji}  Queue Loop:{qloop_emoji}")
         embed.set_footer(text=f"Total Length: {total_length // 60}:{total_length % 60:02d}")
 
         await self.text_channel.send(embed=embed)
@@ -293,10 +309,10 @@ class MusicBot:
 
     async def clear_queue(self, message):
         self.queue = []
-        await self.text_channel.send("**Queue cleared**")
+        await self.text_channel.send(":monkaHmm: **Queue cleared**")
 
     async def skip_song(self, message):
-        await self.text_channel.send("**Skipped** :D")
+        await self.text_channel.send(":white_check_mark: **Skipped** :D")
         self.skip = True
 
     async def move_song(self, message):
@@ -305,9 +321,9 @@ class MusicBot:
         try:
             song = self.queue.pop(int(split[2]) - 1)
             self.queue.insert(int(split[3]) - 1, song)
-            await self.text_channel.send(f"**Moved** `{song.title}` **from** Pos. `{split[2]}` **to** Pos. `{split[3]}`")
+            await self.text_channel.send(f":white_check_mark: **Moved** `{song.title}` **from** Pos. `{split[2]}` **to** Pos. `{split[3]}`")
         except Exception as err:
-            await self.text_channel.send("Error while moving song: " + str(err))
+            await self.text_channel.send(":x: Error while moving song: " + str(err))
 
     async def fast_forward(self, message):
         await self.pause(None)
@@ -320,18 +336,34 @@ class MusicBot:
                 self.source.read()
 
             self.playing.current_pos += skip
-            await self.text_channel.send(f"Skipped {skip} seconds")
+            await self.text_channel.send(f":white_check_mark: Skipped {skip} seconds")
 
         except Exception as err:
             await self.text_channel.send("Error while skipping: " + str(err))
 
         await self.resume(None)
 
+    async def skipto(self, message):
+        try:
+            skip_pos = int(message.content.split(" ")[-1])
+            self.queue = self.queue[skip_pos - 1:]
+            await self.text_channel.send(f"**Skipped** to pos. `{skip_pos - 1}`")
+        except Exception as err:
+            await self.text_channel.send("Couldn't skipto: " + str(err))
+
+    async def queue_loop(self, message):
+        self.queue_looping = not self.queue_looping
+        await self.text_channel.send(("Enabled" if self.queue_looping else "Disabled") + " queue loop :arrows_clockwise:")
+
+    async def song_loop(self, message):
+        self.song_looping = not self.song_looping
+        await self.text_channel.send(("Enabled" if self.song_looping else "Disabled") + " song loop :arrows_clockwise:")
+
     async def play_queue(self):
         self.is_playing = True
 
-        while(len(self.queue) != 0):
-            self.playing = PlayingTrack(self.queue.pop(0))
+        while(len(self.queue) > 0):
+            PlayingTrack(self.queue.pop(0))
             session = self.playing.song.get_session()
             self.source = discord.FFmpegPCMAudio(source=session,
                                                  before_options="-reconnect 1 " +
@@ -346,7 +378,7 @@ class MusicBot:
                     if not self.music_paused:
                         self.playing.current_pos += 1
             except Exception as err:
-                await self.text_channel.send("Error while playing: " +
+                await self.text_channel.send(":x: Error while playing: " +
                                              str(err))
                 await self.disconnect(None)
 
@@ -356,3 +388,7 @@ class MusicBot:
 
             self.voice_client.stop()
             self.skip = False
+            if self.queue_looping:
+                self.queue.append(self.playing.song)
+            if self.song_looping:
+                self.queue.insert(0, self.playing.song)
