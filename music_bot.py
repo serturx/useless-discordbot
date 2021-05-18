@@ -7,6 +7,16 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from dotenv import load_dotenv
 import os
 import random
+from enum import Enum
+
+
+class Emojis(Enum):
+    OKAYCHAMP = "<:okayChamp:836005875936133121>"
+    LULW = "<:LULW:822269834728439818>"
+    PAINCHAMP = "<:painChamp:822271360804847657>"
+    LEOSKATZE = "<:LeosKatze:830104066678980688>"
+    MONKAHMM = "<:monkaHmm:821505358128349215>"
+    WEIRDCHAMP = "<:weirdChamp:822269328279207946>"
 
 
 class Song:
@@ -151,13 +161,13 @@ class MusicBot:
         else:
             self.voice_channel = message.author.voice.channel
             self.voice_client = await self.voice_channel.connect()
-            await self.text_channel.send(":okayChamp: **Connected** :)")
+            await self.text_channel.send(f"{Emojis.OKAYCHAMP} **Connected** :)")
 
     async def set_disconnect_flag(self, message):
         self.disconnecting = True
 
     async def disconnect(self, message):
-        await self.text_channel.send(":painChamp:")
+        await self.text_channel.send(Emojis.PAINCHAMP)
         await self.voice_client.disconnect()
         self.voice_client = None
         self.queue = []
@@ -294,7 +304,7 @@ class MusicBot:
             total_length += self.queue[i].length
 
         if len(self.queue) == 0:
-            embed.add_field(name="**Wow :LeosKatze:**", value="it's _empty_ :weirdChamp:")
+            embed.add_field(name=f"**Wow {Emojis.LEOSKATZE}**", value=f"it's _empty_ {Emojis.WEIRDCHAMP}")
 
         loop_emoji = ":white_check_mark:" if self.song_looping else ":x:"
         qloop_emoji = ":white_check_mark:" if self.queue_looping else ":x:"
@@ -312,7 +322,7 @@ class MusicBot:
 
     async def clear_queue(self, message):
         self.queue = []
-        await self.text_channel.send(":monkaHmm: **Queue cleared**")
+        await self.text_channel.send(f"{Emojis.MONKAHMM} **Queue cleared**")
 
     async def skip_song(self, message):
         await self.text_channel.send(":white_check_mark: **Skipped** :D")
@@ -342,7 +352,7 @@ class MusicBot:
             await self.text_channel.send(f":white_check_mark: Skipped {skip} seconds")
 
         except Exception as err:
-            await self.text_channel.send("Error while skipping: " + str(err))
+            await self.text_channel.send(":x: Error while skipping: " + str(err))
 
         await self.resume(None)
 
@@ -350,9 +360,9 @@ class MusicBot:
         try:
             skip_pos = int(message.content.split(" ")[-1])
             self.queue = self.queue[skip_pos - 1:]
-            await self.text_channel.send(f"**Skipped** to pos. `{skip_pos - 1}`")
+            await self.text_channel.send(f"**Skipped** to pos. `{skip_pos}`")
         except Exception as err:
-            await self.text_channel.send("Couldn't skipto: " + str(err))
+            await self.text_channel.send(":x: Couldn't skipto: " + str(err))
 
     async def queue_loop(self, message):
         self.queue_looping = not self.queue_looping
