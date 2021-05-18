@@ -100,7 +100,7 @@ async def command_selector(message):
                 commands[command[2]]["enabled"] = False
 
             await message.channel.send(f"{command[1]}d feature:" +
-                                       " **{command[2]}**")
+                                       f" **{command[2]}**")
 
             dump_settings()
 
@@ -121,8 +121,9 @@ async def command_selector(message):
         await message.channel.send(f"unknown command or feature **{command[1]}**")
 
 
-async def post_copypasta(message): # gets a random entry from the copypasta file
-    if not commands["kopiernudel"]["enabled"]: return 
+async def post_copypasta(message):  # gets a random entry from the copypasta file
+    if not commands["kopiernudel"]["enabled"]:
+        return
     randIndex = random.randint(0, len(copypastas) - 1)
     await message.channel.send(copypastas[str(randIndex)])
 
@@ -141,10 +142,10 @@ async def check_xd(message):  # checks for "xd", including all formats in the xd
             return
 
 
-async def stupidedia_random(message): #TODO fix, some api changed, should get a random page from stupidedia and display its content
+async def stupidedia_random(message):  # TODO fix, some api changed, should get a random page from stupidedia and display its content
     """url = urls["stupidedia_random"]
     scraper = cloudscraper.create_scraper()
-    
+
     html_unparsed = scraper.get(url).text
 
     html = BeautifulSoup(html_unparsed, "html.parser")
@@ -158,11 +159,12 @@ async def stupidedia_random(message): #TODO fix, some api changed, should get a 
 
     await message.channel.send("lul")
 
-async def help_message(message): #prints a help message including all commands
+
+async def help_message(message):  # prints a help message including all commands
     embed = discord.Embed(title="Commands", description="Usage: -mr command", color=0x34aae5)
 
     for key in commands.keys():
-        if not commands[key]["needPermission"] and not commands[key]["isDeamon"] and commands[key]["enabled"]: #only print commands for which no permissions are needed and aren't deamons
+        if not commands[key]["needPermission"] and not commands[key]["isDeamon"] and commands[key]["enabled"]:  # only print commands for which no permissions are needed and aren't deamons
             embed.add_field(name=f"\t**{key}**", value=commands[key]["desc"])
 
     if message.author.guild_permissions.administrator:
@@ -177,12 +179,13 @@ async def help_message(message): #prints a help message including all commands
                     name += " [feature]"
 
                 embed.add_field(name=name, value=commands[key]["desc"])
-        
-        embed.add_field(name="Note", value="To enable/disable any command type: \"-mr enable/disable \{command\}\"")
+
+        embed.add_field(name="Note", value="To enable/disable any command type: \"-mr enable/disable command\"")
 
     await message.channel.send(embed=embed)
 
-async def john_cena(channel): #joins channel (0.5% chance), and plays john cena
+
+async def john_cena(channel):  # joins channel (0.5% chance), and plays john cena
     rnd = random.randint(1, 200)
     print(rnd)
 
@@ -192,7 +195,7 @@ async def john_cena(channel): #joins channel (0.5% chance), and plays john cena
         source = johncena1
         source2 = johncena2
 
-        audio_source = discord.FFmpegPCMAudio(executable=FFMPEG_PATH, source= source2 if random.randint(1, 10) == 1 else source)
+        audio_source = discord.FFmpegPCMAudio(executable=FFMPEG_PATH, source=source2 if random.randint(1, 10) == 1 else source)
         client.play(audio_source)
 
         while client.is_playing():
@@ -200,9 +203,11 @@ async def john_cena(channel): #joins channel (0.5% chance), and plays john cena
 
         await client.disconnect()
 
+
 async def magic_muschel(message):
     rnd = random.randint(0, len(muschel_answers))
     await message.channel.send(list(muschel_answers.values()[rnd]))
+
 
 async def random_list(message):
     message_text = message.content[16:]
@@ -213,19 +218,20 @@ async def random_list(message):
 
     for i in range(len(message_arr)):
         out += f"{i}. {message_arr[i]}\n"
-    
+
     await message.channel.send(out)
 
-async def restricted_channel_update(message): #sets the channel from which to accept commands
+
+async def restricted_channel_update(message):  # sets the channel from which to accept commands
     global restricted_channel
     channel_id = message.content.split(" ")[-1]
-    
+
     if channel_id == "None":
         role_channel = None
         out = "**Cleared** Role Channel"
         await message.channel.send(out)
         return
-        
+
     channel_id = channel_id[2:-1]
     channel = bot.get_channel(int(channel_id))
     if channel is None:
@@ -234,13 +240,14 @@ async def restricted_channel_update(message): #sets the channel from which to ac
         out = f"Set Role Channel to: {channel.name}"
         restricted_channel = channel.id
         dump_settings()
-    
+
     await message.channel.send(out)
 
-async def role_channel_update(message): #sets the channel to send the role messages to
+
+async def role_channel_update(message):  # sets the channel to send the role messages to
     global role_channel
     channel_id = message.content.split(" ")[-1]
-    
+
     if channel_id == "None":
         role_channel = None
         out = "**Cleared** Role Channel"
@@ -255,8 +262,9 @@ async def role_channel_update(message): #sets the channel to send the role messa
         out = f"Set Role Channel to: {channel.name}"
         role_channel = channel.id
         dump_settings()
-    
+
     await message.channel.send(out)
+
 
 async def role_channel_send_message(message, is_remove=False):
     global role_message
@@ -271,27 +279,31 @@ async def role_channel_send_message(message, is_remove=False):
 
     role_message_obj = await bot.get_channel(role_channel).send(out)
     if is_remove:
-       role_remove_message = role_message_obj.id
+        role_remove_message = role_message_obj.id
     else:
         role_message = role_message_obj.id
 
     await message.channel.send(f":+1: Sent {add_or_rem} role to: {bot.get_channel(role_channel).name}")
-    
+
     for emoji in role_emojis.keys():
         await role_message_obj.add_reaction(emoji)
 
     dump_settings()
 
+
 async def role_channel_rem_send_message(message):
     await role_channel_send_message(message, is_remove=True)
+
 
 async def role_channel_rem_add_send_message(message):
     await role_channel_send_message(message, is_remove=False)
     await role_channel_send_message(message, is_remove=True)
 
-async def check_german(message): #checks whether german is in the message and replies (1% chance)
+
+async def check_german(message):
     message_text = message.content
-    if message_text.count(" ") > 20 or len(message_text) > 150 or message_text.startswith("https://"): return
+    if message_text.count(" ") > 20 or len(message_text) > 150 or message_text.startswith("https://"):
+        return
 
     out = ""
     words = message_text.split(" ")
@@ -313,9 +325,12 @@ async def check_german(message): #checks whether german is in the message and re
             if any_exchanged:
                 out = "Meintest du: " + message_text + "?"
 
-    if len(out) != 0: await message.channel.send(out)
+    if len(out) != 0:
+        await message.channel.send(out)
 
-#EVENT HANDLER
+# EVENT HANDLER
+
+
 @bot.event
 async def on_voice_state_update(member, before, after):
     if not member.bot and ((before.channel is None and after.channel is not None) or (before.channel is not None and after.channel is not None and before.channel != after.channel)):
@@ -329,17 +344,20 @@ async def on_ready():
         print(f"Connected to: {guild.name}")
     print(f"Server Count: {server_count}")
 
+
 @bot.event
-async def on_message(message): #either runs command or runs all Deamons on the message
+async def on_message(message):  # either runs command or runs all Deamons on the message
     if not message.author.bot and message.content is not None and len(message.content) != 0:
         if message.content.startswith("-mr ") and (message.channel.id == restricted_channel or restricted_channel is None):
             await command_selector(message)
         else:
             for feature in commands.values():
-                if feature["fun"] is not None and feature["isDeamon"]: await feature["fun"](message)
+                if feature["fun"] is not None and feature["isDeamon"]:
+                    await feature["fun"](message)
+
 
 @bot.event
-async def on_raw_reaction_add(payload): #adds role depending on with which emoji the user reacted to the message
+async def on_raw_reaction_add(payload):  # adds role depending on with which emoji the user reacted to the message
     if payload.message_id == role_message or payload.message_id == role_remove_message:
         if str(payload.emoji) in role_emojis.keys():
             role = discord.utils.get(payload.member.guild.roles, name=role_emojis[str(payload.emoji)])
@@ -351,6 +369,7 @@ async def on_raw_reaction_add(payload): #adds role depending on with which emoji
         else:
             message = await bot.get_channel(role_channel).fetch_message(payload.message_id)
             await message.remove_reaction(payload.emoji, payload.member)
+
 
 @bot.event
 async def on_member_join(member):
@@ -376,15 +395,15 @@ with open(urls_file, "r") as fp:
 with open(magic_muschel_file, "r") as fp:
     muschel_answers = json.load(fp)
 
-#german checker stuff
+# german checker stuff
 translator = googletrans.Translator()
 dict_en = enchant.Dict("en_US")
 dict_de = enchant.Dict("de_DE")
 
-#music bot stuff
+# music bot stuff
 music_bot = MusicBot()
 
-#ALL COMMANDS
+# ALL COMMANDS
 commands = {
     "kopiernudel": {"fun": post_copypasta, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "sends a random german copypasta"},
     "xd": {"fun": check_xd, "enabled": True, "isDeamon": True, "needPermission": False, "desc": "checks for 'xd' and replies sometimes"},
@@ -403,26 +422,22 @@ commands = {
     "pause": {"fun": music_bot.pause, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "pauses the music"},
     "resume": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "resumes the music"},
     "q": {"fun": music_bot.print_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the queue"},
-    "bye": {"fun": music_bot.disconnect, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
+    "bye": {"fun": music_bot.set_disconnect_flag, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
     "s": {"fun": music_bot.skip_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the current song"},
     "np": {"fun": music_bot.print_now_playing, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
-    "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
+    "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song the top of the queue"},
     "clear": {"fun": music_bot.clear_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "clears the queue"},
     "rm": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
-    "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song at the first given position the the second given position"},
+    "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song at the first given position the second given position"},
     "shuffle": {"fun": music_bot.shuffle_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "shuffles the queue"},
+    ">>": {"fun": music_bot.fast_forward, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the given amount of seconds"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
-
-#with open("commands.json", "w") as fp:
-#    json.dump(commands, fp)
 
 restricted_channel = None
 role_channel = None
 role_message = None
 role_remove_message = None
-
-
 
 load_settings()
 
