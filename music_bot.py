@@ -396,7 +396,7 @@ class MusicBot:
                 await self.disconnect(None)
 
             if self.disconnecting:
-                await self.disconnect()
+                await self.disconnect(None)
                 return
 
             self.voice_client.stop()
