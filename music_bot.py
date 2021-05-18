@@ -149,8 +149,8 @@ class MusicBot:
         if message.author.voice is None:
             raise(ConnectionError(":x: You're not currently in a voice channel"))
         else:
-            self.channel = message.author.voice.channel
-            self.voice_client = await self.channel.connect()
+            self.voice_channel = message.author.voice.channel
+            self.voice_client = await self.voice_channel.connect()
             await self.text_channel.send(":okayChamp: **Connected** :)")
 
     async def set_disconnect_flag(self, message):
@@ -269,7 +269,7 @@ class MusicBot:
 
                 if verbose:
                     embed = discord.Embed(title=f"Added:\n {song.title}", url=song.url, colour=discord.Color.purple())
-                    embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"Position in Queue:{0 if playtop else len(self.queue)}\nLength: {song.get_length()}")
+                    embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"Position in Queue: {1 if playtop else len(self.queue)}\nLength: {song.get_length()}")
                     await self.text_channel.send(embed=embed)
 
         except Exception as err:
@@ -277,26 +277,29 @@ class MusicBot:
                                          " song info : " + str(err))
 
     async def print_queue(self, message):
-        if self.channel is None:
+        if self.voice_channel is None:
             return
 
         embed = discord.Embed(title=f"Now Playing:\n `{self.playing.song.title}`",
                               url=self.playing.song.url,
                               colour=discord.Color.purple())
 
-        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value="**Queue:**")
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value="**Queue:**", inline=False)
 
-        total_length = 0
+        total_length = self.playing.song.length
 
         for i in range(0, len(self.queue)):
             embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_",
                             value=f"{i + 1}. {str(self.queue[i])}\n`{self.queue[i].get_length()}`", inline=False)
             total_length += self.queue[i].length
 
+        if len(self.queue) == 0:
+            embed.add_field(name="**Wow :LeosKatze:**", value="it's _empty_ :weirdChamp:")
+
         loop_emoji = ":white_check_mark:" if self.song_looping else ":x:"
         qloop_emoji = ":white_check_mark:" if self.queue_looping else ":x:"
 
-        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"Loop: {loop_emoji}  Queue Loop:{qloop_emoji}")
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"**Loop:** {loop_emoji}  **Queue Loop:**{qloop_emoji}", inline=False)
         embed.set_footer(text=f"Total Length: {total_length // 60}:{total_length % 60:02d}")
 
         await self.text_channel.send(embed=embed)
@@ -330,8 +333,8 @@ class MusicBot:
 
         try:
             skip = int(message.content.split(" ")[-1])
-
             skip_steps = (skip * 1000) // 20
+
             for i in range(0, skip_steps):
                 self.source.read()
 
@@ -363,7 +366,7 @@ class MusicBot:
         self.is_playing = True
 
         while(len(self.queue) > 0):
-            PlayingTrack(self.queue.pop(0))
+            self.playing = PlayingTrack(self.queue.pop(0))
             session = self.playing.song.get_session()
             self.source = discord.FFmpegPCMAudio(source=session,
                                                  before_options="-reconnect 1 " +
