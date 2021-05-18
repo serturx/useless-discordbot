@@ -10,9 +10,10 @@ import random
 
 
 class Song:
-    def __init__(self, title, url):
+    def __init__(self, title: str, url: str, length: int):
         self.title = title
         self.url = url
+        self.length = length
 
     def get_session(self):
         with youtube_dl.YoutubeDL({}) as ydl:
@@ -20,11 +21,23 @@ class Song:
             return info["formats"][0]["url"]
 
     def __str__(self):
-        return f"{self.title}, {self.url}"
+        return f"[`{self.title}`]({self.url})"
+
+    def get_length(self):
+        return f"{self.length // 60}:{self.length % 60:02d}"
+
+
+class PlayingTrack:
+    def __init__(self, song: Song):
+        self.song = song
+        self.current_pos = 0
+
+    def get_playing_info(self):
+        return f"{self.current_pos // 60}:{self.current_pos % 60:02d}/{self.song.get_length()}"
 
 
 class URL:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
 
     def is_valid_url(self):
@@ -59,12 +72,12 @@ class MusicBot:
         self.music_paused = False
         self.skip = False
         self.is_playing = False
+        self.disconnecting = False
 
         load_dotenv()
 
-        auth = SpotifyClientCredentials(
-                                                os.getenv("SPOTIFY_CLIENT_ID"),
-                                                os.getenv("SPOTIFY_CLIENT_SECRET"))
+        auth = SpotifyClientCredentials(os.getenv("SPOTIFY_CLIENT_ID"),
+                                        os.getenv("SPOTIFY_CLIENT_SECRET"))
 
         self.spotify = spotipy.Spotify(auth_manager=auth)
 
@@ -89,29 +102,23 @@ class MusicBot:
             with youtube_dl.YoutubeDL({}) as ydl:
                 info = ydl.extract_info(f"ytsearch:{query}",
                                         download=False)["entries"][0]
-                return Song(info["title"], info["webpage_url"])
+                return Song(info["title"], info["webpage_url"], info["duration"])
 
         except Exception:
             return None
 
     async def convert_to_yt_song(self, url: URL):
-                #if "playlist" in url:
-                #    print(self.spotify.playlist_items(ressource_id)["tracks"][0]["track"]["name"])
-                #    return
         if "track" in url.url:
             track = self.spotify.track(url.get_spotify_id())
             return await self.search_yt(track["name"] + " " + track["album"]["artists"][0]["name"])
         else:
             raise ValueError("Spotify Link is not a track")
 
-    def get_playlist_tracks(self):
-        return
-
-    def pause(self, message):
+    async def pause(self, message):
         self.voice_client.pause()
         self.music_paused = True
 
-    def resume(self, message):
+    async def resume(self, message):
         self.voice_client.resume()
         self.music_paused = False
 
@@ -141,6 +148,9 @@ class MusicBot:
             self.voice_client = await self.channel.connect()
             await self.text_channel.send("Connected :)")
 
+    async def set_disconnect_flag(self, message):
+        self.disconnecting = True
+
     async def disconnect(self, message):
         await self.text_channel.send("Bye :(")
         await self.voice_client.disconnect()
@@ -151,10 +161,10 @@ class MusicBot:
         self.playing = None
         self.is_playing = False
 
-    def get_song_from_yt(self, url):
+    def get_song_from_yt(self, url: URL):
         with youtube_dl.YoutubeDL({}) as ydl:
-            info = ydl.extract_info(url, download=False)
-            return Song(info["title"], info["webpage_url"])
+            info = ydl.extract_info(url.url, download=False)
+            return Song(info["title"], info["webpage_url"], info["duration"])
 
     async def add_playlist_to_queue(self, url: URL, playtop=False):
         playlist = []
@@ -179,7 +189,7 @@ class MusicBot:
                         else:
                             await self.text_channel.send("Couldn't add " + entry["track"]["name"])
                     except IndexError:
-                        pass
+                        await self.text_channel.send("Couldn't add " + entry["track"]["name"])
 
                 playlist_title = playlist_items["name"]
 
@@ -207,7 +217,7 @@ class MusicBot:
                 info = ydl.extract_info(url.url, download=False)
 
                 for entry in info["entries"]:
-                    playlist.append(Song(entry["title"], entry["webpage_url"]))
+                    playlist.append(Song(entry["title"], entry["webpage_url"], entry["duration"]))
 
                 playlist_title = info["title"]
 
@@ -225,11 +235,12 @@ class MusicBot:
             url = URL(link)
             song = None
 
-            if url.is_playlist():
-                await self.add_playlist_to_queue(url)
-                return
+            if url.is_valid_url():
 
-            elif url.is_valid_url():
+                if url.is_playlist():
+                    await self.add_playlist_to_queue(url)
+                    return
+
                 if url.is_yt():
                     song = self.get_song_from_yt(url)
                 elif url.is_spotify():
@@ -250,24 +261,35 @@ class MusicBot:
                     await self.text_channel.send("Added: " + song.title)
 
         except Exception as err:
-            await self.text_channel.send(
-                                        "Error while retrieving" +
-                                        " song info : " + str(err))
+            await self.text_channel.send("Error while retrieving" +
+                                         " song info : " + str(err))
 
     async def print_queue(self, message):
         if self.channel is None:
             return
 
-        embed = discord.Embed(title=f"Now Playing:\n `{self.playing.title}`", url=self.playing.url, colour=discord.Color.purple())
+        embed = discord.Embed(title=f"Now Playing:\n `{self.playing.song.title}`",
+                              url=self.playing.song.url,
+                              colour=discord.Color.purple())
+
         embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value="**Queue:**")
 
+        total_length = 0
+
         for i in range(0, len(self.queue)):
-            embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"{i + 1}. [`{self.queue[i].title}`]({self.queue[i].url})",  inline=False)
+            embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_",
+                            value=f"{i + 1}. {str(self.queue[i])}\n`{self.queue[i].get_length()}`", inline=False)
+            total_length += self.queue[i].length
+
+        embed.set_footer(text=f"Total Length: {total_length // 60}:{total_length % 60:02d}")
 
         await self.text_channel.send(embed=embed)
 
-    async def print_now_playing(self, message): # TODO add current song length/position
-        await self.text_channel.send("**Now Playing: **" + self.playing.title)
+    async def print_now_playing(self, message):
+        embed = discord.Embed(title="**Now Playing:**", colour=discord.Color.purple())
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=str(self.playing.song) + "\n" + self.playing.get_playing_info(), inline=False)
+
+        await self.text_channel.send(embed=embed)
 
     async def clear_queue(self, message):
         self.queue = []
@@ -287,27 +309,50 @@ class MusicBot:
         except Exception as err:
             await self.text_channel.send("Error while moving song: " + str(err))
 
-    async def play_queue(self):
+    async def fast_forward(self, message):
+        await self.pause(None)
 
+        try:
+            skip = int(message.content.split(" ")[-1])
+
+            skip_steps = (skip * 1000) // 20
+            for i in range(0, skip_steps):
+                self.source.read()
+
+            self.playing.current_pos += skip
+            await self.text_channel.send(f"Skipped {skip} seconds")
+
+        except Exception as err:
+            await self.text_channel.send("Error while skipping: " + str(err))
+
+        await self.resume(None)
+
+    async def play_queue(self):
         self.is_playing = True
+
         while(len(self.queue) != 0):
-            self.playing = self.queue.pop(0)
-            session = self.playing.get_session()
-            source = discord.FFmpegPCMAudio(
-                            source=session,
-                            before_options="-reconnect 1 " +
-                                           "-reconnect_streamed 1 " +
-                                           "-reconnect_delay_max 5")
-            self.voice_client.play(source)
+            self.playing = PlayingTrack(self.queue.pop(0))
+            session = self.playing.song.get_session()
+            self.source = discord.FFmpegPCMAudio(source=session,
+                                                 before_options="-reconnect 1 " +
+                                                 "-reconnect_streamed 1 " +
+                                                 "-reconnect_delay_max 5")
+            self.voice_client.play(self.source)
 
             try:
-                while((self.voice_client.is_playing() or self.music_paused)
-                        and not self.skip):
+                while((self.voice_client.is_playing() or self.music_paused) and
+                      not self.skip and not self.disconnecting):
                     await asyncio.sleep(1)
+                    if not self.music_paused:
+                        self.playing.current_pos += 1
             except Exception as err:
-                await self.text_channel.send("Error while playing: "
-                                             + str(err))
+                await self.text_channel.send("Error while playing: " +
+                                             str(err))
                 await self.disconnect(None)
+
+            if self.disconnecting:
+                await self.disconnect()
+                return
 
             self.voice_client.stop()
             self.skip = False
