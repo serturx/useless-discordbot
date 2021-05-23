@@ -128,8 +128,14 @@ class MusicBot:
 
     async def convert_to_yt_song(self, url: URL):
         if "track" in url.url:
-            track = self.spotify.track(url.get_spotify_id())
-            return await self.search_yt(track["name"] + " " + track["album"]["artists"][0]["name"])
+            for i in range(0, 2):
+                try:
+                    track = self.spotify.track(url.get_spotify_id())
+                    result = await self.search_yt(track["name"] + " " + track["album"]["artists"][0]["name"])
+                    return result
+                except AttributeError as err:
+                    print(f"Retrying {i}: {str(err)}")
+                    self.set_discord()
         else:
             raise ValueError(":x: Spotify Link is not a track")
 
@@ -181,7 +187,6 @@ class MusicBot:
         self.skip = False
         self.is_playing = False
         self.disconnecting = False
-        self.spotify = None
         self.queue_looping = False
 
     def get_song_from_yt(self, url: URL):
