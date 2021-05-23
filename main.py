@@ -228,7 +228,7 @@ async def restricted_channel_update(message):  # sets the channel from which to 
 
     if channel_id == "None":
         role_channel = None
-        out = "**Cleared** Role Channel"
+        out = "**Cleared** Restricted Channel"
         await message.channel.send(out)
         return
 
@@ -237,7 +237,7 @@ async def restricted_channel_update(message):  # sets the channel from which to 
     if channel is None:
         out = "bruh couldn't find the channel"
     else:
-        out = f"Set Role Channel to: {channel.name}"
+        out = f"**Set** Restricted Channel to: `{channel.name}`"
         restricted_channel = channel.id
         dump_settings()
 
@@ -259,7 +259,7 @@ async def role_channel_update(message):  # sets the channel to send the role mes
     if channel is None:
         out = "bruh couldn't find the channel"
     else:
-        out = f"Set Role Channel to: {channel.name}"
+        out = f"Set Role Channel to: `{channel.name}`"
         role_channel = channel.id
         dump_settings()
 

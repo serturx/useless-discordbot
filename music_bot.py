@@ -34,7 +34,7 @@ class Song:
         return f"[`{self.title}`]({self.url})"
 
     def get_length(self):
-        return f"{self.length // 60}:{self.length % 60:02d}"
+        return f"{int(self.length) // 60}:{int(self.length) % 60:02d}"
 
 
 class PlayingTrack:
@@ -43,7 +43,7 @@ class PlayingTrack:
         self.current_pos = 0
 
     def get_playing_info(self):
-        return f"{self.current_pos // 60}:{self.current_pos % 60:02d}/{self.song.get_length()}"
+        return f"{int(self.current_pos) // 60}:{int(self.current_pos) % 60:02d}/{self.song.get_length()}"
 
 
 class URL:
@@ -86,6 +86,9 @@ class MusicBot:
         self.queue_looping = False
         self.song_looping = False
 
+        self.set_discord()
+
+    def set_discord(self):
         load_dotenv()
 
         auth = SpotifyClientCredentials(os.getenv("SPOTIFY_CLIENT_ID"),
@@ -102,7 +105,7 @@ class MusicBot:
 
         if self.voice_client is not None:
             if message.author.voice.channel.id != self.voice_channel.id:
-                await self.text_channel.send(":LULW: You must be in the same channelto send commands")
+                await self.text_channel.send(f"{Emojis.LULW} You must be in the same channel to send commands")
                 return
 
             await self.add_to_queue(message.content[6:], playtop=playtop)
@@ -193,43 +196,48 @@ class MusicBot:
         await self.text_channel.send(":hourglass_flowing_sand: Gathering Playlist information...")
 
         if url.is_spotify():
-            if "playlist" in url.url:
-                playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=21)
+            for i in range(0, 2):
+                try:
+                    if "playlist" in url.url:
+                        playlist_items = self.spotify.playlist_items(url.get_spotify_id(), limit=21)
 
-                tracks = playlist_items["tracks"]["items"][:20]
+                        tracks = playlist_items["tracks"]["items"][:20]
 
-                for entry in tracks:
+                        for entry in tracks:
 
-                    try:
-                        artist = entry["track"]["album"]["artists"][0]["name"]
+                            try:
+                                artist = entry["track"]["album"]["artists"][0]["name"]
 
-                        song = await self.search_yt(entry["track"]["name"] + " " + artist)
-                        if song is not None:
-                            playlist.append(song)
-                        else:
-                            await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
-                    except IndexError:
-                        await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
+                                song = await self.search_yt(entry["track"]["name"] + " " + artist)
+                                if song is not None:
+                                    playlist.append(song)
+                                else:
+                                    await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
+                            except IndexError:
+                                await self.text_channel.send(":x: Couldn't add " + entry["track"]["name"])
 
-                playlist_title = playlist_items["name"]
+                        playlist_title = playlist_items["name"]
 
-            elif "album" in url.url:
-                album_items = self.spotify.album_tracks(url.get_spotify_id(), limit=21)
+                    elif "album" in url.url:
+                        album_items = self.spotify.album_tracks(url.get_spotify_id(), limit=21)
 
-                tracks = album_items["tracks"]["items"][:20]
+                        tracks = album_items["tracks"]["items"][:20]
 
-                for entry in tracks:
-                    try:
-                        artist = entry["artists"][0]["name"]
-                        song = await self.search_yt(entry["name"] + " " + artist)
-                        playlist.append(song)
-                    except IndexError:
-                        pass
+                        for entry in tracks:
+                            try:
+                                artist = entry["artists"][0]["name"]
+                                song = await self.search_yt(entry["name"] + " " + artist)
+                                playlist.append(song)
+                            except IndexError:
+                                pass
 
-                playlist_title = album_items["name"]
+                        playlist_title = album_items["name"]
 
-            else:
-                raise ValueError(":x: invalid spotify link")
+                    else:
+                        raise ValueError(":x: invalid spotify link")
+                except AttributeError as err:
+                    print(f"Retrying {i}: {str(err)}")
+                    self.set_discord()
 
         elif url.is_yt():
 
@@ -309,8 +317,8 @@ class MusicBot:
         loop_emoji = ":white_check_mark:" if self.song_looping else ":x:"
         qloop_emoji = ":white_check_mark:" if self.queue_looping else ":x:"
 
-        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"**Loop:** {loop_emoji}  **Queue Loop:**{qloop_emoji}", inline=False)
-        embed.set_footer(text=f"Total Length: {total_length // 60}:{total_length % 60:02d}")
+        embed.add_field(name="\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_\\_", value=f"**Loop: **{loop_emoji}  **Queue Loop: **{qloop_emoji}", inline=False)
+        embed.set_footer(text=f"Total Length: {total_length // 60}:{int(total_length) % 60:02d}")
 
         await self.text_channel.send(embed=embed)
 
