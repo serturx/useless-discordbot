@@ -62,10 +62,7 @@ def dump_settings():
 
 
 def load_settings():
-    global restricted_channel
-    global role_channel
-    global role_message
-    global role_remove_message
+    global restricted_channel, role_channel, role_message, role_remove_message
 
     settings = {}
 
@@ -132,7 +129,7 @@ async def check_xd(message):  # checks for "xd", including all formats in the xd
     if not commands["xd"]["enabled"]:
         return
 
-    if random.randint(0, 100) < 95:
+    if random.randint(0, 100) >= 96:
         return
 
     for v in xd_variations:
@@ -366,9 +363,9 @@ async def on_raw_reaction_add(payload):  # adds role depending on with which emo
                     await payload.member.add_roles(role)
                 else:
                     await payload.member.remove_roles(role)
-        else:
-            message = await bot.get_channel(role_channel).fetch_message(payload.message_id)
-            await message.remove_reaction(payload.emoji, payload.member)
+        >=
+        message = await bot.get_channel(role_channel).fetch_message(payload.message_id)
+        await message.remove_reaction(payload.emoji, payload.member)
 
 
 @bot.event
