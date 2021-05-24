@@ -363,7 +363,6 @@ async def on_raw_reaction_add(payload):  # adds role depending on with which emo
                     await payload.member.add_roles(role)
                 else:
                     await payload.member.remove_roles(role)
-        >=
         message = await bot.get_channel(role_channel).fetch_message(payload.message_id)
         await message.remove_reaction(payload.emoji, payload.member)
 
