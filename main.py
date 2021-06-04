@@ -7,6 +7,9 @@ import asyncio
 import googletrans
 import enchant
 from music_bot import MusicBot
+from selenium import webdriver
+import undetected_chromedriver.v2 as uc
+from bs4 import BeautifulSoup
 
 '''
 PREREQUISITES:
@@ -140,21 +143,22 @@ async def check_xd(message):  # checks for "xd", including all formats in the xd
 
 
 async def stupidedia_random(message):  # TODO fix, some api changed, should get a random page from stupidedia and display its content
-    """url = urls["stupidedia_random"]
-    scraper = cloudscraper.create_scraper()
 
-    html_unparsed = scraper.get(url).text
+    driver = uc.Chrome()
+    driver.get(urls["stupidedia_random"])
+
+    html_unparsed = driver.page_source
 
     html = BeautifulSoup(html_unparsed, "html.parser")
     print(html)
     div = html.find(id="mw-content-text")
     print(div)
-    out = html.find(id="firstHeading").get_text() +
+    out = html.find(id="firstHeading").get_text()
     print(out)
     out += div.find("p").get_text()
-    out = html"""
+    out = html
 
-    await message.channel.send("lul")
+    await message.channel.send(out)
 
 
 async def help_message(message):  # prints a help message including all commands
@@ -203,7 +207,7 @@ async def john_cena(channel):  # joins channel (0.5% chance), and plays john cen
 
 async def magic_muschel(message):
     rnd = random.randint(0, len(muschel_answers))
-    await message.channel.send(list(muschel_answers.values()[rnd]))
+    await message.channel.send(list(muschel_answers.values())[rnd])
 
 
 async def random_list(message):

@@ -414,7 +414,7 @@ class MusicBot:
 
             self.voice_client.stop()
             self.skip = False
-            if self.queue_looping:
-                self.queue.append(self.playing.song)
             if self.song_looping:
                 self.queue.insert(0, self.playing.song)
+            elif self.queue_looping:
+                self.queue.append(self.playing.song)
