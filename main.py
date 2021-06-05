@@ -7,8 +7,8 @@ import asyncio
 import googletrans
 import enchant
 from music_bot import MusicBot
-from selenium import webdriver
-import undetected_chromedriver.v2 as uc
+# from selenium import webdriver
+# import undetected_chromedriver.v2 as uc
 from bs4 import BeautifulSoup
 
 '''
