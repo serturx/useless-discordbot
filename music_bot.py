@@ -81,7 +81,6 @@ class MusicBot:
         self.text_channel = None
         self.music_paused = False
         self.skip = False
-        self.is_playing = False
         self.disconnecting = False
         self.queue_looping = False
         self.song_looping = False
@@ -97,7 +96,7 @@ class MusicBot:
         self.spotify = spotipy.Spotify(auth_manager=auth)
 
     async def play(self, message, playtop=False):
-        if self.voice_client is None:
+        if self.voice_client is None or not self.voice_client.is_connected():
             try:
                 await self.connect(message)
             except Exception as err:
@@ -107,11 +106,13 @@ class MusicBot:
             if message.author.voice.channel.id != self.voice_channel.id:
                 await self.text_channel.send(f"{Emojis.LULW} You must be in the same channel to send commands")
                 return
-
+        try:
             await self.add_to_queue(message.content[6:], playtop=playtop)
 
             if not self.voice_client.is_playing():
                 await self.play_queue()
+        except Exception as err:
+            await self.text_channel.send("Error: " + str(err))
 
     async def playtop(self, message):
         await self.play(message, playtop=True)
@@ -185,7 +186,6 @@ class MusicBot:
         self.text_channel = None
         self.music_paused = False
         self.skip = False
-        self.is_playing = False
         self.disconnecting = False
         self.queue_looping = False
 
@@ -279,7 +279,7 @@ class MusicBot:
                 elif url.is_spotify():
                     song = await self.convert_to_yt_song(url)
                 else:
-                    await self.text_channel.send(":x: Unsupported Platform :(")
+                    raise Exception(":x: Unsupported Plattform")
 
             else:
                 song = await self.search_yt(link)
@@ -386,7 +386,6 @@ class MusicBot:
         await self.text_channel.send(("Enabled" if self.song_looping else "Disabled") + " song loop :arrows_clockwise:")
 
     async def play_queue(self):
-        self.is_playing = True
 
         while(len(self.queue) > 0):
             self.playing = PlayingTrack(self.queue.pop(0))
