@@ -174,7 +174,10 @@ class MusicBot:
             await self.text_channel.send(f"{Emojis.OKAYCHAMP.value} **Connected** :)")
 
     async def set_disconnect_flag(self, message):
-        self.disconnecting = True
+        if not self.voice_client.is_playing():
+            await self.disconnect(None)
+        else:
+            self.disconnecting = True
 
     async def disconnect(self, message):
         await self.text_channel.send(Emojis.PAINCHAMP.value)
