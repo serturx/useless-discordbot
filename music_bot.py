@@ -107,7 +107,7 @@ class MusicBot:
                 await self.text_channel.send(f"{Emojis.LULW} You must be in the same channel to send commands")
                 return
         try:
-            await self.add_to_queue(message.content[6:], playtop=playtop)
+            await self.add_to_queue(message.content[4:], playtop=playtop)
 
             if not self.voice_client.is_playing():
                 await self.play_queue()

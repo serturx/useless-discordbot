@@ -211,7 +211,7 @@ async def magic_muschel(message):
 
 
 async def random_list(message):
-    message_text = message.content[16:]
+    message_text = message.content[14:]
     message_arr = message_text.split(",")
     random.shuffle(message_arr)
 
@@ -349,7 +349,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):  # either runs command or runs all Deamons on the message
     if not message.author.bot and message.content is not None and len(message.content) != 0:
-        if message.content.startswith("-mr ") and (message.channel.id == restricted_channel or restricted_channel is None):
+        if message.content.startswith("! ") and (message.channel.id == restricted_channel or restricted_channel is None):
             await command_selector(message)
         else:
             for feature in commands.values():
@@ -423,12 +423,12 @@ commands = {
     "pause": {"fun": music_bot.pause, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "pauses the music"},
     "resume": {"fun": music_bot.resume, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "resumes the music"},
     "q": {"fun": music_bot.print_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the queue"},
-    "bye": {"fun": music_bot.set_disconnect_flag, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
+    "leave": {"fun": music_bot.set_disconnect_flag, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "the bot leaves :("},
     "s": {"fun": music_bot.skip_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the current song"},
     "np": {"fun": music_bot.print_now_playing, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "prints the currently playing song"},
-    "pt": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song the top of the queue"},
+    "playtop": {"fun": music_bot.playtop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "adds a song the top of the queue"},
     "clear": {"fun": music_bot.clear_queue, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "clears the queue"},
-    "rm": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
+    "remove": {"fun": music_bot.remove_index, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "removes a song at the given index"},
     "move": {"fun": music_bot.move_song, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "moves the song from the first given position the second given position"},
     "shuffle": {"fun": music_bot.shuffle_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "shuffles the queue"},
     ">>": {"fun": music_bot.fast_forward, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the given amount of seconds"},
