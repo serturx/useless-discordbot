@@ -349,7 +349,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):  # either runs command or runs all Deamons on the message
     if not message.author.bot and message.content is not None and len(message.content) != 0:
-        if message.content.startswith("! ") and (message.channel.id == restricted_channel or restricted_channel is None):
+        if message.content.startswith("!") and (message.channel.id == restricted_channel or restricted_channel is None):
             await command_selector(message)
         else:
             for feature in commands.values():
