@@ -131,12 +131,9 @@ async def post_copypasta(message):  # gets a random entry from the copypasta fil
 async def check_xd(message):  # checks for "xd", including all formats in the xd_variations file and replies with random xd string (5% chance)
     if not commands["xd"]["enabled"]:
         return
-
-    if random.randint(0, 100) >= 96:
-        return
-
+        
     for v in xd_variations:
-        if v in message.content:
+        if v in message.content and random.randint(0, 100) <= 25:
             await message.channel.send("".join([c.upper() if random.randint(0, 1) == 0 else c.lower()
                                        for c in "x" + random.randint(1, 10) * "d"]))
             return
@@ -374,11 +371,13 @@ async def on_raw_reaction_add(payload):  # adds role depending on with which emo
 
 @bot.event
 async def on_member_join(member):
-    role1 = discord.utils.get(member.guild.roles, name="────────────────────")
-    role2 = discord.utils.get(member.guild.roles, name="Avikratischer Besucher")
+    role1 = member.guild.get_role(833816521976315904)
+    role2 = member.guild.get_role(819154899103121439)
+    role3 = member.guild.get_role(819670961301094470)
 
     await member.add_roles(role1)
     await member.add_roles(role2)
+    await member.add_roles(role3)
 
 # LOAD DATA
 with open(copypastas_file, "r", encoding="utf-16") as fp:
