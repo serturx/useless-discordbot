@@ -343,6 +343,7 @@ async def on_ready():
     print(f"Server Count: {server_count}")
 
 
+
 @bot.event
 async def on_message(message):  # either runs command or runs all Deamons on the message
     if not message.author.bot and message.content is not None and len(message.content) != 0:
@@ -371,9 +372,10 @@ async def on_raw_reaction_add(payload):  # adds role depending on with which emo
 
 @bot.event
 async def on_member_join(member):
-    role1 = member.guild.get_role(833816521976315904)
-    role2 = member.guild.get_role(819154899103121439)
-    role3 = member.guild.get_role(819670961301094470)
+
+    role1 = discord.utils.get(member.guild.roles, id=833816521976315904)
+    role2 = discord.utils.get(member.guild.roles, id=819154899103121439)
+    role3 = discord.utils.get(member.guild.roles, id=819670961301094470)
 
     await member.add_roles(role1)
     await member.add_roles(role2)
