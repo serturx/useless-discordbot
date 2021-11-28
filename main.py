@@ -31,7 +31,7 @@ johncena2 = "audio/johncena2.mp3"
 
 # INITIALIZE BOT
 load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN_DEV")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 FFMPEG_PATH = os.getenv("FFMPEG_PATH")
 
 intents = discord.Intents.all()
@@ -347,7 +347,7 @@ async def on_ready():
 @bot.event
 async def on_message(message):  # either runs command or runs all Deamons on the message
     if not message.author.bot and message.content is not None and len(message.content) != 0:
-        if message.content.startswith("!") and (message.channel.id == restricted_channel or restricted_channel is None):
+        if message.content.startswith("$ ") and (message.channel.id == restricted_channel or restricted_channel is None):
             await command_selector(message)
         else:
             for feature in commands.values():
@@ -434,8 +434,8 @@ commands = {
     "shuffle": {"fun": music_bot.shuffle_list, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "shuffles the queue"},
     ">>": {"fun": music_bot.fast_forward, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips the given amount of seconds"},
     "skipto": {"fun": music_bot.skipto, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "skips to a given position in the queue"},
-    "qloop": {"fun": music_bot.queue_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles queue looping"},
-    "loop": {"fun": music_bot.song_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles song looping"},
+    "dauerschlangeschlange": {"fun": music_bot.queue_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles queue looping"},
+    "dauerschlange": {"fun": music_bot.song_loop, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "toggles song looping"},
     "muschel": {"fun": magic_muschel, "enabled": True, "isDeamon": False, "needPermission": False, "desc": "Die magische Miesmuschel gibt weise Antworten"}
 }
 
